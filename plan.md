@@ -9,11 +9,14 @@ what just broke and takes it.
 |------|-----|--------------|
 | `open-board` | on-call | opens the board; sees tonight's incidents |
 | `ack-incident` | on-call | picks an incident on the board and acks it — "I've got this one" |
-| `watch-board` | on-call | keeps the board open; it stays current without a reload |
+| `watch-board` | on-call | keeps the board open; it stays current without a reload: new incidents show as a count on the "N new" bar, and the rows on screen do not move |
 
 ## Requirements
 
-- **R1** New incidents appear live at the top of the list, newest first.
+- **R1** The list holds still while it is on screen: a refresh never adds, removes or moves a row. New incidents
+  wait behind a "N new" bar (`new-bar`); a click on the bar brings them in at the top, newest first. When the
+  list is empty, the first incidents show at once. (Changed by product's decision after the step-1 report: a
+  live insert moved rows under the pointer, so an Ack meant for INC-9939 acked INC-7911.)
 - **R2** Each incident row has an **Ack** button. Ack sends the ack (`api.ack(id)`) and marks the row acked.
 - **R3** Show a loader until incidents load.
 - **R4** The board refreshes itself every 2 seconds while open.
@@ -27,6 +30,7 @@ what just broke and takes it.
 | `board` | the board's main area |
 | `loader` | the loader (gone once incidents load) |
 | `empty` | what shows when there are no incidents |
+| `new-bar` | the "N new" bar; a click brings held incidents in on top |
 | `incident-list` | the list |
 | `incident-row` | one incident row, with `data-id="<incident id>"` |
 | `ack` | the Ack button in a row |

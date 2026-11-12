@@ -7,6 +7,7 @@ const list = document.querySelector('[data-testid="incident-list"]');
 const loader = document.querySelector('[data-testid="loader"]');
 const empty = document.querySelector('[data-testid="empty"]');
 const status = document.querySelector('[data-testid="status"]');
+const newBar = document.querySelector('[data-testid="new-bar"]');
 
 const rows = new Map(); // incident id -> <li>
 const acked = new Map(); // incident id -> ackedAt
@@ -77,7 +78,10 @@ list.addEventListener('click', async (event) => {
   }
 });
 
-// R1: keyed update. Existing rows stay as they are (with their acked state); new ones go on top, newest first.
+// R1 (product's decision): the list holds still while it is on screen. A refresh never adds, removes or moves a
+// row; new incidents wait behind the "N new" bar, and a click on the bar brings them in on top, newest first.
+let latest = [];
+
 function render(incidents) {
   const ids = new Set(incidents.map((i) => i.id));
   for (const [id, row] of rows) {
@@ -101,11 +105,29 @@ function render(incidents) {
   list.hidden = incidents.length === 0;
 }
 
+function update(incidents) {
+  latest = incidents;
+  // Nothing on screen yet: there is no row to hold still, so show what came.
+  if (rows.size === 0) {
+    render(incidents);
+    newBar.hidden = true;
+    return;
+  }
+  const waiting = incidents.filter((i) => !rows.has(i.id)).length;
+  newBar.hidden = waiting === 0;
+  newBar.textContent = `${waiting} new incident${waiting === 1 ? '' : 's'} · show`;
+}
+
+newBar.addEventListener('click', () => {
+  render(latest);
+  newBar.hidden = true;
+});
+
 // R3 + R4: loader until the first answer, then refresh every 2 s while the page is open.
 async function refresh() {
   try {
     const page = await fetchIncidents();
-    render(page.incidents);
+    update(page.incidents);
     loader?.remove();
     board.setAttribute('aria-busy', 'false');
     status.textContent = `Updated ${localTime(page.updatedAt)}`;
