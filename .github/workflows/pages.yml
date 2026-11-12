@@ -1,0 +1,31 @@
+# Deploys app/ to GitHub Pages, stamped with the commit it was built from (plan R6).
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stamp the build
+        run: |
+          mkdir -p dist && cp -R app/. dist/
+          sed -i "s/__BUILD_SHA__/${GITHUB_SHA}/g" dist/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deploy
+        uses: actions/deploy-pages@v4
